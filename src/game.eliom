@@ -31,7 +31,7 @@ let check_contamination st (c : Creet.t) =
       o != c && o.alive && is_sick o.kind
       && touching (c.x, c.y, r) (o.x, o.y, Creet.radius o)
     in
-    if touches_river ~y:c.y ~r then Creet.infect c
+    if touches_river ~x:c.x ~y:c.y ~r then Creet.infect c
     else if
       List.exists
         (fun o -> touched_by_sick o && catches_virus (Random.float 1.))
@@ -65,6 +65,7 @@ let move st (c : Creet.t) t =
   let dx, dy = c.dir in
   c.x <- c.x +. (dx *. v *. dt);
   c.y <- c.y +. (dy *. v *. dt);
+  Creet.fit_in_board c;
   c.dir <- bounce ~x:c.x ~y:c.y ~r:(Creet.radius c) c.dir
 
 (* The Lwt thread that drives one creet until it dies or the game ends *)
@@ -84,11 +85,20 @@ let rec life st (c : Creet.t) =
   end
 
 (* Mouse position converted to board coordinates.
-   Not clamped: a creet can be dropped outside the board, bounce brings it back *)
+   A creet can be dropped outside the board (bounce brings it back),
+   but it stays visible in the window, even if the mouse leaves it *)
 let place st (c : Creet.t) (ev : Dom_html.mouseEvent Js.t) =
   let rect = st.board##getBoundingClientRect in
   let x = float_of_int ev##.clientX -. rect##.left in
   let y = float_of_int ev##.clientY -. rect##.top in
+  let root = Dom_html.document##.documentElement in
+  let view =
+    ( -.rect##.left,
+      -.rect##.top,
+      float_of_int root##.clientWidth -. rect##.left,
+      float_of_int root##.clientHeight -. rect##.top )
+  in
+  let x, y = keep_on_screen ~view ~x ~y ~r:(Creet.radius c) in
   c.x <- x;
   c.y <- y;
   Creet.draw c

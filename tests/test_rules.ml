@@ -22,9 +22,40 @@ let test_contact () =
   check "different radii" (touching (0., 0., 60.) (70., 0., 10.))
 
 let test_river () =
-  check "top edge inside river" (touches_river ~y:(river_height +. 15.) ~r:15.);
-  check "below river" (not (touches_river ~y:(river_height +. 15.1) ~r:15.));
-  check "center in river" (touches_river ~y:10. ~r:15.)
+  let x = 400. in
+  check "top edge inside river" (touches_river ~x ~y:(river_height +. 15.) ~r:15.);
+  check "below river" (not (touches_river ~x ~y:(river_height +. 15.1) ~r:15.));
+  check "center in river" (touches_river ~x ~y:10. ~r:15.);
+  check "outside the board at river height does not touch"
+    (not (touches_river ~x:(-40.) ~y:30. ~r:15.));
+  check "right of the board at river height does not touch"
+    (not (touches_river ~x:(board_width +. 40.) ~y:30. ~r:15.));
+  check "overlapping the river from the side touches"
+    (touches_river ~x:(-10.) ~y:30. ~r:15.);
+  check "above the board does not touch" (not (touches_river ~x ~y:(-40.) ~r:15.));
+  check "corner uses the real distance"
+    (not (touches_river ~x:(-12.) ~y:(river_height +. 12.) ~r:15.))
+
+let test_push_inside () =
+  let r = 15. in
+  check "inside is kept" (push_inside ~x:300. ~y:200. ~r = (300., 200.));
+  check "sticking out on the left is pushed back"
+    (push_inside ~x:5. ~y:200. ~r = (r, 200.));
+  check "sticking out at the bottom is pushed back"
+    (push_inside ~x:300. ~y:(board_height -. 2.) ~r = (300., board_height -. r));
+  check "a grown berserk at the wall is pushed back"
+    (push_inside ~x:(board_width -. 15.) ~y:300. ~r:20.
+    = (board_width -. 20., 300.));
+  check "center outside the board is not moved"
+    (push_inside ~x:(-50.) ~y:(board_height +. 30.) ~r = (-50., board_height +. 30.))
+
+let test_keep_on_screen () =
+  let view = (-100., -50., 1100., 750.) and r = 15. in
+  check "visible position is kept" (keep_on_screen ~view ~x:900. ~y:(-20.) ~r = (900., -20.));
+  check "left of the window is clamped"
+    (keep_on_screen ~view ~x:(-500.) ~y:300. ~r = (-100. +. r, 300.));
+  check "below the window is clamped"
+    (keep_on_screen ~view ~x:300. ~y:2000. ~r = (300., 750. -. r))
 
 let test_hospital () =
   let y = board_height -. (hospital_height /. 2.) in
@@ -140,6 +171,8 @@ let test_game_over () =
 let () =
   test_contact ();
   test_river ();
+  test_push_inside ();
+  test_keep_on_screen ();
   test_hospital ();
   test_bounce ();
   test_speed ();

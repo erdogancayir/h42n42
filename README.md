@@ -42,6 +42,8 @@ Stop the application with `Ctrl+C`, or `docker-compose down`.
 - The game starts with 8 Creets. A new one is born every 5 seconds as long as
   at least one healthy Creet is alive.
 - A Creet that touches the river becomes **sick** (red) and moves 15% slower.
+  Only a real contact counts: a Creet outside the board, next to the river,
+  is not infected.
 - A sick Creet touching a healthy one has a 2% chance to infect it at each
   iteration of the contact.
 - Every 10 seconds, a sick Creet has a 10% chance to become **berserk** and a
@@ -51,7 +53,9 @@ Stop the application with `Ctrl+C`, or `docker-compose down`.
   - **mean** (black): 15% smaller, chases the nearest healthy Creet and dies
     after 1 minute.
 - Drag any healthy or sick Creet with the mouse. A Creet being dragged cannot
-  be infected. It can be dropped anywhere, even outside the board.
+  be infected. It can be dropped anywhere, even outside the board, and then
+  bounces back into it. It always stays visible in the window, even if the
+  mouse is released outside of it.
 - Dropping a sick Creet into the hospital heals it. A sick Creet that wanders
   into the hospital on its own is not healed. Berserk and mean Creets cannot be
   grabbed or healed.

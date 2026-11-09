@@ -27,7 +27,13 @@ let random_direction () = direction_of_angle (Random.float (2. *. Float.pi))
 
 let radius c = c.diameter /. 2.
 
-let px v = Js.string (Printf.sprintf "%.1fpx" v)
+(* Never let a creet on the board stick out of it (see Rules.push_inside) *)
+let fit_in_board c =
+  let x, y = push_inside ~x:c.x ~y:c.y ~r:(radius c) in
+  c.x <- x;
+  c.y <- y
+
+let px v =Js.string (Printf.sprintf "%.1fpx" v)
 
 let draw c =
   let style = c.elt##.style in
@@ -114,6 +120,7 @@ let update_disease c t =
   | Berserk ->
       if t >= c.next_check then begin
         c.diameter <- grow_berserk c.diameter;
+        fit_in_board c;
         c.next_check <- c.next_check +. evolve_period
       end;
       not (berserk_is_dead ~original:base_diameter c.diameter)

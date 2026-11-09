@@ -5,8 +5,8 @@ type kind = Healthy | Sick | Berserk | Mean
 
 (* Board layout, in pixels.
    Must match the sizes in static/css/h42n42.css *)
-let board_width = 800. (* bounce, in_hospital, Game.spawn *)
-let board_height = 600. (* bounce, in_hospital, Game.spawn *)
+let board_width = 800. (* bounce, push_inside, touches_river, in_hospital, Game.spawn *)
+let board_height = 600. (* bounce, push_inside, in_hospital, Game.spawn *)
 let river_height = 60. (* touches_river; Game.spawn never spawns in it *)
 let hospital_height = 80. (* in_hospital; Game.spawn never spawns in it *)
 
@@ -70,8 +70,15 @@ let touching (x1, y1, r1) (x2, y2, r2) =
 (* [roll] is a random number in [0, 1) *)
 let catches_virus roll = roll < infection_chance
 
-(* y: center of the circle, y - r: top of the circle *)
-let touches_river ~y ~r = y -. r <= river_height
+(* The river is the rectangle [0, board_width] x [0, river_height].
+   A circle touches it when the point of the rectangle closest to its
+   center is within its radius, so a creet outside the board does not
+   touch the river just because it is at the same height *)
+let touches_river ~x ~y ~r =
+  let clamp low high v = Float.max low (Float.min high v) in
+  let dx = x -. clamp 0. board_width x in
+  let dy = y -. clamp 0. river_height y in
+  (dx *. dx) +. (dy *. dy) <= r *. r
 
 (* A creet is dropped in the hospital when its center is inside it *)
 let in_hospital ~x ~y =
@@ -94,6 +101,20 @@ let bounce ~x ~y ~r (dx, dy) =
     else dy
   in
   (dx, dy)
+
+(* bounce only changes the direction: a creet moving almost along a wall, or a
+   berserk growing next to one, would stick out of the board. This puts it back
+   against the wall on each axis where its center is on the board. A creet
+   dropped outside keeps its position and comes back with bounce. *)
+let push_inside ~x ~y ~r =
+  let fit size v = if v < 0. || v > size then v else Float.max r (Float.min (size -. r) v) in
+  (fit board_width x, fit board_height y)
+
+(* Keeps a dragged creet fully visible in the window.
+   [view] is the visible area (left, top, right, bottom) in board coordinates *)
+let keep_on_screen ~view:(left, top, right, bottom) ~x ~y ~r =
+  let clamp low high v = Float.max low (Float.min high v) in
+  (clamp (left +. r) (right -. r) x, clamp (top +. r) (bottom -. r) y)
 
 let direction_of_angle a = (cos a, sin a)
 
