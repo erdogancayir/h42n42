@@ -1,0 +1,13 @@
+services:
+  h42n42:
+    build: .
+    image: h42n42
+    container_name: h42n42
+    ports:
+      - "8080:8080"
+    volumes:
+      - h42n42-data:/home/opam/h42n42/local
+    restart: unless-stopped
+
+volumes:
+  h42n42-data:

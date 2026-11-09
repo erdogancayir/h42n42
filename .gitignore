@@ -34,3 +34,20 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+# h42n42 build outputs
+_server/
+_client/
+local/
+static/h42n42.js
+h42n42.conf
+
+# Subject
+*.pdf
+
+# OS and editors
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~

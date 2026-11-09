@@ -1,0 +1,8 @@
+.git
+_server
+_client
+local
+tests/_build
+static/h42n42.js
+h42n42.conf
+*.pdf
